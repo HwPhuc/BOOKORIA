@@ -3,11 +3,13 @@ using BOOKORIA.Domain.Entities;
 using BOOKORIA.Domain.Enums;
 using BOOKORIA.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BOOKORIA.Infrastructure.Services;
 
 public class StripeWebhookService(
     BookoriaDbContext dbContext,
+    IServiceProvider serviceProvider, //
     IEbookDeliveryService ebookDeliveryService,
     ILogger<StripeWebhookService> logger) : IStripeWebhookService
 {
@@ -31,8 +33,21 @@ public class StripeWebhookService(
             //
             if (payment.Order.Items.Any(x => x.ItemType == "Ebook"))
             {
-                // Nếu trạng thái đã succeeded nhưng vì lý do dẫm chân luồng mà chưa gửi mail, tiến hành gửi bù
-                await ebookDeliveryService.SendEbookAsync(payment.OrderId, cancellationToken);
+                // Gọi gửi bù ngầm bằng cách tạo Scope mới độc lập hoàn toàn
+                var orderId = payment.OrderId;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = serviceProvider.CreateScope();
+                        var scopedDeliveryService = scope.ServiceProvider.GetRequiredService<IEbookDeliveryService>();
+                        await scopedDeliveryService.SendEbookAsync(orderId, CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Lỗi gửi mail bù ngầm thất bại.");
+                    }
+                });
             }
             //
             return;
