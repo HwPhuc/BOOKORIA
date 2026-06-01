@@ -27,12 +27,22 @@ public class BookoriaDbContext(DbContextOptions<BookoriaDbContext> options) : Id
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        var isPostgres = Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
 
         modelBuilder.Entity<Book>(entity =>
         {
             entity.Property(x => x.PriceEbook).HasPrecision(18, 2);
             entity.Property(x => x.PricePrint).HasPrecision(18, 2);
-            entity.Property(x => x.RowVersion).IsRowVersion();
+            if (isPostgres)
+            {
+                entity.Property(x => x.RowVersion)
+                    .IsConcurrencyToken()
+                    .HasColumnType("bytea");
+            }
+            else
+            {
+                entity.Property(x => x.RowVersion).IsRowVersion();
+            }
         });
 
         modelBuilder.Entity<BookCategory>(entity =>
@@ -43,7 +53,16 @@ public class BookoriaDbContext(DbContextOptions<BookoriaDbContext> options) : Id
         modelBuilder.Entity<Order>(entity =>
         {
             entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
-            entity.Property(x => x.RowVersion).IsRowVersion();
+            if (isPostgres)
+            {
+                entity.Property(x => x.RowVersion)
+                    .IsConcurrencyToken()
+                    .HasColumnType("bytea");
+            }
+            else
+            {
+                entity.Property(x => x.RowVersion).IsRowVersion();
+            }
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
@@ -59,7 +78,7 @@ public class BookoriaDbContext(DbContextOptions<BookoriaDbContext> options) : Id
         modelBuilder.Entity<Payment>()
             .HasIndex(x => x.StripeSessionId)
             .IsUnique()
-            .HasFilter("[StripeSessionId] IS NOT NULL");
+            .HasFilter(isPostgres ? "\"StripeSessionId\" IS NOT NULL" : "[StripeSessionId] IS NOT NULL");
 
         modelBuilder.Entity<EbookDelivery>()
             .HasIndex(x => x.DownloadToken)
@@ -67,7 +86,16 @@ public class BookoriaDbContext(DbContextOptions<BookoriaDbContext> options) : Id
 
         modelBuilder.Entity<Shipment>(entity =>
         {
-            entity.Property(x => x.RowVersion).IsRowVersion();
+            if (isPostgres)
+            {
+                entity.Property(x => x.RowVersion)
+                    .IsConcurrencyToken()
+                    .HasColumnType("bytea");
+            }
+            else
+            {
+                entity.Property(x => x.RowVersion).IsRowVersion();
+            }
         });
 
         modelBuilder.Entity<Category>().HasData(
