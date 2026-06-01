@@ -78,12 +78,17 @@ if (app.Environment.IsDevelopment() || migrateOnStartup)
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<BookoriaDbContext>();
-    dbContext.Database.Migrate();
-    if (app.Environment.IsDevelopment() || migrateOnStartup)
+    if (string.Equals(databaseProvider, "Postgres", StringComparison.OrdinalIgnoreCase))
     {
-        DbSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
-        IdentitySeeder.SeedAsync(scope.ServiceProvider).GetAwaiter().GetResult();
+        dbContext.Database.EnsureCreated();
     }
+    else
+    {
+        dbContext.Database.Migrate();
+    }
+
+    DbSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
+    IdentitySeeder.SeedAsync(scope.ServiceProvider).GetAwaiter().GetResult();
 }
 
 // Configure the HTTP request pipeline.
