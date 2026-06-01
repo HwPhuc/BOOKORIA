@@ -73,13 +73,17 @@ builder.Services.AddScoped<ICloudinaryStorageService, CloudinaryStorageService>(
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+var migrateOnStartup = builder.Configuration.GetValue<bool>("MIGRATE_ON_STARTUP");
+if (app.Environment.IsDevelopment() || migrateOnStartup)
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<BookoriaDbContext>();
     dbContext.Database.Migrate();
-    DbSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
-    IdentitySeeder.SeedAsync(scope.ServiceProvider).GetAwaiter().GetResult();
+    if (app.Environment.IsDevelopment() || migrateOnStartup)
+    {
+        DbSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
+        IdentitySeeder.SeedAsync(scope.ServiceProvider).GetAwaiter().GetResult();
+    }
 }
 
 // Configure the HTTP request pipeline.
