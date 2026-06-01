@@ -1,0 +1,23 @@
+@page
+@model BOOKORIA.Pages.Cart.CheckoutSuccessModel
+@{
+    ViewData["Title"] = "Kết quả thanh toán";
+}
+
+@if (Model.IsPaid)
+{
+    <div class="alert alert-success">
+        Thanh toán thành công. Đơn hàng của bạn đã được ghi nhận.
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        Thanh toán chưa hoàn tất. Vui lòng kiểm tra lại trạng thái giao dịch Stripe.
+    </div>
+}
+
+<div class="d-flex gap-2">
+    <a asp-page="/Orders/History" class="btn btn-sm btn-primary">Xem lịch sử đơn hàng</a>
+    <a asp-page="/Books/Index" class="btn btn-sm btn-outline-secondary">Tiếp tục mua sách</a>
+</div>

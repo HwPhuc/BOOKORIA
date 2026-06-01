@@ -1,0 +1,24 @@
+@page "{id:guid}"
+@model BOOKORIA.Pages.Books.ReadSampleModel
+@{
+    ViewData["Title"] = "Đọc thử";
+}
+
+@if (Model.Sample is null)
+{
+    <div class="alert alert-warning">Không tìm thấy bản đọc thử.</div>
+    <a asp-page="/Books/Index" class="btn btn-sm btn-outline-secondary">Quay lại danh sách</a>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h5 mb-0">Đọc thử: @Model.Sample.Title</h1>
+        <a asp-page="/Books/Details" asp-route-id="@Model.Sample.BookId" class="btn btn-sm btn-outline-secondary">Quay lại chi tiết</a>
+    </div>
+
+    <div class="ratio ratio-16x9 border rounded overflow-hidden" style="min-height: 75vh;">
+        <iframe src="@Model.Sample.SamplePdfUrl" title="Đọc thử @Model.Sample.Title"></iframe>
+    </div>
+
+    <p class="small text-muted mt-2 mb-0">Nếu trình duyệt không hiển thị PDF, <a href="@Model.Sample.SamplePdfUrl" target="_blank" rel="noopener noreferrer">bấm vào đây để mở trực tiếp</a>.</p>
+}

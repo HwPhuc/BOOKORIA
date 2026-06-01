@@ -1,0 +1,101 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "BOOKORIA";
+}
+
+<section class="home-hero rounded-4 p-4 p-md-5 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-12 col-lg-9">
+            <span class="badge text-bg-light mb-3">Nền tảng sách số & sách giấy</span>
+            <h1 class="display-6 fw-bold mb-3">Khám phá tri thức mỗi ngày cùng BOOKORIA</h1>
+            <p class="lead mb-4">Mua ebook nhận file PDF qua email ngay, mua sách giấy theo dõi vận chuyển minh bạch.</p>
+        </div>
+    </div>
+</section>
+
+<style>
+    .home-hero .badge.text-bg-light {
+        background-color: #efe3d1 !important;
+        color: #4a3b2c !important;
+        border: 1px solid #d7c4aa;
+    }
+</style>
+
+<section class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Tổng đầu sách</div>
+                <div class="fs-3 fw-semibold">@Model.TotalBooks</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Khách hàng</div>
+                <div class="fs-3 fw-semibold">@Model.TotalCustomers</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Đơn thành công</div>
+                <div class="fs-3 fw-semibold">@Model.SuccessfulOrders</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Sách nổi bật</h2>
+        <a asp-page="/Books/Index" class="small text-decoration-none">Xem tất cả</a>
+    </div>
+    <div class="row g-3">
+        @foreach (var book in Model.FeaturedBooks)
+        {
+            <div class="col-12 col-md-6 col-xl-3">
+                <a asp-page="/Books/Details" asp-route-id="@book.Id" class="text-decoration-none text-dark">
+                    <div class="card h-100 border-0 shadow-sm home-book-card">
+                        <div class="bg-light rounded-top d-flex align-items-center justify-content-center" style="height: 180px;">
+                            @if (!string.IsNullOrWhiteSpace(book.CoverUrl))
+                            {
+                                <img src="@book.CoverUrl" alt="@book.Title" class="img-fluid" style="max-height: 165px; object-fit: contain;" />
+                            }
+                        </div>
+                        <div class="card-body">
+                            <h3 class="h6 mb-1">@book.Title</h3>
+                            <div class="small text-muted mb-2">@book.Author</div>
+                            <div class="small"><strong>Ebook:</strong> @book.PriceEbook.ToString("N0") đ</div>
+                            <div class="small"><strong>Sách giấy:</strong> @book.PricePrint.ToString("N0") đ</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Sách mới cập nhật</h2>
+    </div>
+    <div class="row g-3">
+        @foreach (var book in Model.NewBooks)
+        {
+            <div class="col-12 col-md-6 col-xl-3">
+                <a asp-page="/Books/Details" asp-route-id="@book.Id" class="card border-0 shadow-sm h-100 text-decoration-none text-dark home-book-card">
+                    <div class="card-body">
+                        <h3 class="h6 mb-1">@book.Title</h3>
+                        <div class="small text-muted mb-2">@book.Author</div>
+                        <span class="badge text-bg-primary-subtle">Mới</span>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+

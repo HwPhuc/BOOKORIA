@@ -1,0 +1,138 @@
+@page "{id:guid}"
+@model BOOKORIA.Pages.Books.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết sách";
+}
+
+@if (Model.Book is null)
+{
+    <div class="alert alert-warning">Không tìm thấy sách.</div>
+    <a asp-page="/Books/Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-12 col-lg-4">
+            @if (!string.IsNullOrWhiteSpace(Model.Book.CoverUrl))
+            {
+                <div class="book-detail-cover-wrap d-flex align-items-center justify-content-center">
+                    <img src="@Model.Book.CoverUrl" class="img-fluid rounded book-detail-cover-image" alt="@Model.Book.Title" />
+                </div>
+            }
+            else
+            {
+                <div class="border rounded p-5 text-center text-muted">No cover</div>
+            }
+        </div>
+
+        <div class="col-12 col-lg-8">
+            @{ var returnUrl = Url.Page("/Books/Details", new { id = Model.Book.Id }); }
+
+            <h1 class="mb-2">@Model.Book.Title</h1>
+            <h5 class="text-muted mb-3">@Model.Book.Author</h5>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Book.Isbn))
+            {
+                <p><strong>ISBN:</strong> @Model.Book.Isbn</p>
+            }
+
+            <p class="mb-4">@Model.Book.Description</p>
+
+            <div class="mb-3">
+                <div><strong>Giá Ebook:</strong> @Model.Book.PriceEbook.ToString("N0") đ</div>
+                <div><strong>Giá Sách giấy:</strong> @Model.Book.PricePrint.ToString("N0") đ</div>
+                <div><strong>Tồn kho:</strong> @Model.Book.Stock</div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                @if (!string.IsNullOrWhiteSpace(Model.Book.SamplePdfUrl))
+                {
+                    <a asp-page="/Books/ReadSample" asp-route-id="@Model.Book.Id" class="btn btn-book-soft">Đọc thử miễn phí</a>
+                }
+
+                <form method="post" asp-page="/Cart/Add" class="d-inline">
+                    <input type="hidden" name="bookId" value="@Model.Book.Id" />
+                    <input type="hidden" name="itemType" value="Ebook" />
+                    <input type="hidden" name="quantity" value="1" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="btn btn-book-primary">Thêm ebook vào giỏ</button>
+                </form>
+
+                <form method="post" asp-page="/Cart/Add" class="d-inline">
+                    <input type="hidden" name="bookId" value="@Model.Book.Id" />
+                    <input type="hidden" name="itemType" value="PhysicalBook" />
+                    <input type="hidden" name="quantity" value="1" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="btn btn-book-secondary" disabled="@(Model.Book.Stock <= 0)">
+                        @(Model.Book.Stock > 0 ? "Thêm sách giấy vào giỏ" : "Hết hàng")
+                    </button>
+                </form>
+
+                <a asp-page="/Books/Index" class="btn btn-book-soft">Quay lại danh sách</a>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .book-detail-cover-wrap {
+        min-height: 420px;
+        border: 1px solid #ddcdb6;
+        border-radius: .8rem;
+        background: #f3e8d8;
+        padding: .75rem;
+    }
+
+    .book-detail-cover-image {
+        width: 100%;
+        max-height: 520px;
+        object-fit: contain;
+        box-shadow: 0 8px 18px rgba(61, 50, 40, 0.15);
+        background: transparent;
+    }
+
+    .btn-book-primary {
+        color: #fff !important;
+        background-color: #7a6042;
+        border-color: #7a6042;
+    }
+
+    .btn-book-primary:hover,
+    .btn-book-primary:focus {
+        color: #fff !important;
+        background-color: #654f36;
+        border-color: #654f36;
+    }
+
+    .btn-book-secondary {
+        color: #4a3b2c !important;
+        background-color: #eadcc8;
+        border-color: #ccb398;
+    }
+
+    .btn-book-secondary:hover,
+    .btn-book-secondary:focus {
+        color: #3d3228 !important;
+        background-color: #e0cfb7;
+        border-color: #b89d80;
+    }
+
+    .btn-book-secondary:disabled {
+        color: #8b7a66 !important;
+        background-color: #f1e8dd;
+        border-color: #d8c9b5;
+    }
+
+    .btn-book-soft {
+        color: #5d4a37 !important;
+        background-color: #f9f3ea;
+        border: 1px solid #ccb398;
+    }
+
+    .btn-book-soft:hover,
+    .btn-book-soft:focus {
+        color: #473726 !important;
+        background-color: #efe2cf;
+        border-color: #b79a7d;
+    }
+</style>

@@ -1,0 +1,92 @@
+@page
+@model BOOKORIA.Pages.Cart.IndexModel
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Giỏ hàng</h1>
+    @if (Model.Items.Any())
+    {
+        <form method="post" asp-page-handler="Clear">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa toàn bộ</button>
+        </form>
+    }
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-light border">Giỏ hàng đang trống. <a asp-page="/Books/Index">Tiếp tục mua sách</a></div>
+}
+else
+{
+    <div class="table-responsive mb-3">
+        <table class="table table-sm align-middle">
+            <thead>
+            <tr>
+                <th>Sách</th>
+                <th>Loại</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-center">Số lượng</th>
+                <th class="text-end">Thành tiền</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrWhiteSpace(item.CoverUrl))
+                            {
+                                <img src="@item.CoverUrl" alt="@item.Title" style="width:48px;height:64px;object-fit:contain;" class="border rounded p-1 bg-light" />
+                            }
+                            <div>
+                                <div class="fw-semibold">@item.Title</div>
+                                <div class="small text-muted">@item.Author</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>@(item.ItemType == "PhysicalBook" ? "Sách giấy" : "Ebook")</td>
+                    <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                    <td class="text-center">
+                        <form method="post" asp-page-handler="UpdateQuantity" class="d-inline-flex gap-1 align-items-center">
+                            <input type="hidden" name="bookId" value="@item.BookId" />
+                            <input type="hidden" name="itemType" value="@item.ItemType" />
+                            <input type="number" min="1" name="quantity" value="@item.Quantity" class="form-control form-control-sm" style="width:72px;" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Cập nhật</button>
+                        </form>
+                    </td>
+                    <td class="text-end fw-semibold">@item.LineTotal.ToString("N0") đ</td>
+                    <td class="text-end">
+                        <form method="post" asp-page-handler="Remove">
+                            <input type="hidden" name="bookId" value="@item.BookId" />
+                            <input type="hidden" name="itemType" value="@item.ItemType" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <a asp-page="/Books/Index" class="btn btn-sm btn-outline-secondary">Tiếp tục mua sách</a>
+        </div>
+        <div class="text-end">
+            <div class="small text-muted">Tổng cộng</div>
+            <div class="h5 mb-2">@Model.TotalAmount.ToString("N0") đ</div>
+            <form method="post" asp-page-handler="Checkout">
+                <button type="submit" class="btn btn-sm btn-primary">Thanh toán với Stripe</button>
+            </form>
+        </div>
+    </div>
+}

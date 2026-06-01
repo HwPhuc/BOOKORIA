@@ -1,0 +1,227 @@
+@page
+@model BOOKORIA.Pages.Orders.HistoryModel
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-1">Đơn hàng của tôi</h1>
+        <p class="text-muted mb-0">Theo dõi tiến độ xử lý và vận chuyển đơn hàng dễ dàng.</p>
+    </div>
+    <a asp-page="/Books/Index" class="btn btn-primary btn-sm">Mua thêm sách</a>
+</div>
+
+@if (!Model.Orders.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body py-4 text-center">
+            <div class="fs-5 fw-semibold mb-2">Bạn chưa có đơn hàng nào</div>
+            <p class="text-muted mb-3">Hãy khám phá kho sách để bắt đầu mua sắm.</p>
+            <a asp-page="/Books/Index" class="btn btn-outline-primary">Xem danh sách sách</a>
+        </div>
+    </div>
+}
+else
+{
+    foreach (var order in Model.Orders)
+    {
+        var shippingProgress = GetShippingProgress(order.Shipment?.Status);
+
+        <div class="card shadow-sm border-0 mb-3 order-card">
+            <div class="card-body p-3 p-md-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                    <div>
+                        <div class="small text-muted">Mã đơn hàng</div>
+                        <div class="fw-semibold">@order.Id</div>
+                        <div class="small text-muted mt-1">@order.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    <div class="text-md-end">
+                        <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                            <span class="badge @GetOrderTypeBadgeClass(order.OrderType)">@GetOrderTypeLabel(order.OrderType)</span>
+                            <span class="badge @GetPaymentBadgeClass(order.PaymentStatus)">@order.PaymentStatus</span>
+                            <span class="badge @GetOrderStatusBadgeClass(order.Status)">@order.Status</span>
+                        </div>
+                        <div class="fw-bold fs-5 mt-2 text-primary">@order.TotalAmount.ToString("N0") đ</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-2">
+                    <table class="table table-sm align-middle order-lines-table mb-0">
+                        <colgroup>
+                            <col class="col-book" />
+                            <col class="col-type" />
+                            <col class="col-qty" />
+                            <col class="col-price" />
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>Sách</th>
+                            <th class="text-center">Loại</th>
+                            <th class="text-end">SL</th>
+                            <th class="text-end">Đơn giá</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var line in order.Lines)
+                        {
+                            <tr>
+                                <td class="fw-medium line-book-title">@line.BookTitle</td>
+                                <td class="text-center">
+                                    <span class="badge @(line.ItemType == "PhysicalBook" ? "badge-line-physical" : "badge-line-ebook")">
+                                        @(line.ItemType == "PhysicalBook" ? "Sách giấy" : "Ebook")
+                                    </span>
+                                </td>
+                                <td class="text-end">@line.Quantity</td>
+                                <td class="text-end">@line.UnitPrice.ToString("N0") đ</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (order.OrderType == BOOKORIA.Domain.Enums.OrderType.PhysicalBook)
+                {
+                    <div class="shipping-panel mt-3">
+                        <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                            <div>
+                                <div class="small text-muted">Trạng thái giao hàng</div>
+                                <div class="fw-semibold">@GetShippingLabel(order.Shipment?.Status)</div>
+                            </div>
+                            <div class="text-md-end">
+                                <div class="small text-muted">Mã vận đơn</div>
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(order.Shipment?.TrackingCode) ? "Chưa có" : order.Shipment.TrackingCode)</div>
+                            </div>
+                        </div>
+
+                        <div class="progress order-shipping-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@shippingProgress">
+                            <div class="progress-bar bg-success" style="width: @shippingProgress%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between small text-muted mt-2">
+                            <span>Chờ lấy hàng</span>
+                            <span>Đang giao</span>
+                            <span>Đã giao</span>
+                        </div>
+
+                        <div class="small text-muted mt-2">
+                            Cập nhật lần cuối: @(order.Shipment is null ? "Đang chờ tạo vận đơn" : order.Shipment.LastUpdatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@functions {
+    private static string GetOrderTypeLabel(BOOKORIA.Domain.Enums.OrderType orderType)
+        => orderType == BOOKORIA.Domain.Enums.OrderType.PhysicalBook ? "Sách giấy" : "Ebook";
+
+    private static string GetOrderTypeBadgeClass(BOOKORIA.Domain.Enums.OrderType orderType)
+        => orderType == BOOKORIA.Domain.Enums.OrderType.PhysicalBook ? "badge-order-type-physical" : "badge-order-type-ebook";
+
+    private static string GetPaymentBadgeClass(BOOKORIA.Domain.Enums.PaymentStatus paymentStatus)
+        => paymentStatus == BOOKORIA.Domain.Enums.PaymentStatus.Succeeded ? "badge-payment-succeeded" : "badge-payment-pending";
+
+    private static string GetOrderStatusBadgeClass(BOOKORIA.Domain.Enums.OrderStatus orderStatus)
+        => orderStatus switch
+        {
+            BOOKORIA.Domain.Enums.OrderStatus.Completed => "badge-order-completed",
+            BOOKORIA.Domain.Enums.OrderStatus.Processing => "badge-order-processing",
+            BOOKORIA.Domain.Enums.OrderStatus.Cancelled => "badge-order-cancelled",
+            BOOKORIA.Domain.Enums.OrderStatus.Paid => "badge-order-paid",
+            _ => "badge-order-pending"
+        };
+
+    private static int GetShippingProgress(BOOKORIA.Domain.Enums.ShippingStatus? shippingStatus)
+        => shippingStatus switch
+        {
+            BOOKORIA.Domain.Enums.ShippingStatus.WaitingPickup => 25,
+            BOOKORIA.Domain.Enums.ShippingStatus.InTransit => 70,
+            BOOKORIA.Domain.Enums.ShippingStatus.Delivered => 100,
+            BOOKORIA.Domain.Enums.ShippingStatus.Returned => 100,
+            BOOKORIA.Domain.Enums.ShippingStatus.Failed => 100,
+            _ => 10
+        };
+
+    private static string GetShippingLabel(BOOKORIA.Domain.Enums.ShippingStatus? shippingStatus)
+        => shippingStatus switch
+        {
+            BOOKORIA.Domain.Enums.ShippingStatus.NotCreated => "Đang tạo vận đơn",
+            BOOKORIA.Domain.Enums.ShippingStatus.WaitingPickup => "Chờ lấy hàng",
+            BOOKORIA.Domain.Enums.ShippingStatus.InTransit => "Đang giao",
+            BOOKORIA.Domain.Enums.ShippingStatus.Delivered => "Đã giao",
+            BOOKORIA.Domain.Enums.ShippingStatus.Failed => "Giao thất bại",
+            BOOKORIA.Domain.Enums.ShippingStatus.Returned => "Đã hoàn hàng",
+            _ => "Đang tạo vận đơn"
+        };
+}
+
+<style>
+    .order-card {
+        border-left: 4px solid #9a7b57;
+    }
+
+    .order-lines-table thead th {
+        font-size: .78rem;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: .03em;
+    }
+
+    .order-lines-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .order-lines-table col.col-book {
+        width: 52%;
+    }
+
+    .order-lines-table col.col-type {
+        width: 18%;
+    }
+
+    .order-lines-table col.col-qty {
+        width: 10%;
+    }
+
+    .order-lines-table col.col-price {
+        width: 20%;
+    }
+
+    .line-book-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .shipping-panel {
+        background: #f8f2e9;
+        border: 1px solid #ddcdb6;
+        border-radius: .75rem;
+        padding: .85rem;
+        color: #3d3228;
+    }
+
+    .order-shipping-progress {
+        height: 10px;
+        background-color: #e6d9c7;
+    }
+
+    .badge-order-type-ebook { background: #8b6f4e; color: #fff; }
+    .badge-order-type-physical { background: #6e5a44; color: #fff; }
+
+    .badge-payment-succeeded { background: #6f8a5e; color: #fff; }
+    .badge-payment-pending { background: #a07d55; color: #fff; }
+
+    .badge-order-completed { background: #5f7b50; color: #fff; }
+    .badge-order-processing { background: #86715a; color: #fff; }
+    .badge-order-cancelled { background: #a0655f; color: #fff; }
+    .badge-order-paid { background: #8b6f4e; color: #fff; }
+    .badge-order-pending { background: #7b6a57; color: #fff; }
+
+    .badge-line-ebook { background: #8b6f4e; color: #fff; }
+    .badge-line-physical { background: #7b6a57; color: #fff; }
+</style>

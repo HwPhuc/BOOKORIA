@@ -1,0 +1,58 @@
+@page
+@model BOOKORIA.Pages.Admin.Books.IndexModel
+@{
+    ViewData["Title"] = "Quản lý sách";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Quản lý sách</h1>
+    <a asp-page="/Admin/Books/Create" class="btn btn-primary">Thêm sách</a>
+</div>
+
+@if (!Model.Books.Any())
+{
+    <div class="alert alert-info">Chưa có sách.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Tên sách</th>
+                    <th>Tác giả</th>
+                    <th class="text-end">Ebook</th>
+                    <th class="text-end">Sách giấy</th>
+                    <th class="text-end">Tồn kho</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var book in Model.Books)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Author</td>
+                    <td class="text-end">@book.PriceEbook.ToString("N0") đ</td>
+                    <td class="text-end">@book.PricePrint.ToString("N0") đ</td>
+                    <td class="text-end">@book.Stock</td>
+                    <td>
+                        @if (book.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-page="/Admin/Books/Edit" asp-route-id="@book.Id" class="btn btn-sm admin-btn-edit">Sửa</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

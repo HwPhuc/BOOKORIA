@@ -1,0 +1,44 @@
+@page
+@model BOOKORIA.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-7 col-lg-5">
+        <h1 class="mb-4">Thông tin cá nhân</h1>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <div class="alert alert-success">@Model.Message</div>
+        }
+
+        <form method="post" class="card card-body shadow-sm">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Username" class="form-label"></label>
+                <input asp-for="Input.Username" class="form-control" />
+                <span asp-validation-for="Input.Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <input asp-for="Input.PhoneNumber" class="form-control" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Lưu thay đổi</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

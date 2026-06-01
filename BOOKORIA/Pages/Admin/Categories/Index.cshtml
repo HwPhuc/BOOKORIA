@@ -1,0 +1,54 @@
+@page
+@model BOOKORIA.Pages.Admin.Categories.IndexModel
+@{
+    ViewData["Title"] = "Quản lý thể loại";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Quản lý thể loại</h1>
+    <a asp-page="/Admin/Categories/Create" class="btn btn-primary">Thêm thể loại</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Error))
+{
+    <div class="alert alert-warning">@Model.Error</div>
+}
+
+@if (!Model.Categories.Any())
+{
+    <div class="alert alert-info">Chưa có thể loại nào.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+            <tr>
+                <th>Tên thể loại</th>
+                <th class="text-end">Số sách</th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var category in Model.Categories)
+            {
+                <tr>
+                    <td>@category.Name</td>
+                    <td class="text-end">@category.BookCount</td>
+                    <td class="text-end">
+                        <a asp-page="/Admin/Categories/Edit" asp-route-id="@category.Id" class="btn btn-sm admin-btn-edit">Sửa</a>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@category.Id" class="d-inline" onsubmit="return confirm('Xóa thể loại này?');">
+                            <button type="submit" class="btn btn-sm admin-btn-delete">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

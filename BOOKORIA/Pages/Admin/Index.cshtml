@@ -1,0 +1,156 @@
+@page
+@model BOOKORIA.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Admin Dashboard</h1>
+    <a asp-page="/Admin/Index" asp-page-handler="ExportExcel" class="btn btn-primary">Xuất báo cáo Excel</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tổng số sách</div>
+                <div class="fs-4 fw-semibold">@Model.TotalBooks</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tổng người dùng</div>
+                <div class="fs-4 fw-semibold">@Model.TotalUsers</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tổng đơn hàng</div>
+                <div class="fs-4 fw-semibold">@Model.TotalOrders</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Doanh thu đã thanh toán</div>
+                <div class="fs-4 fw-semibold">@Model.TotalRevenue.ToString("N0") đ</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6">Doanh thu 6 tháng gần nhất</h2>
+                <div class="admin-chart-wrap"><canvas id="revenueChart" height="84"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6">Tỷ lệ loại đơn hàng</h2>
+                <div class="admin-chart-wrap"><canvas id="orderTypeChart" height="84"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6">Phân bố trạng thái đơn hàng</h2>
+                <div class="admin-chart-wrap admin-chart-wrap-wide"><canvas id="orderStatusChart" height="70"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .admin-chart-wrap {
+        max-height: 220px;
+    }
+
+    .admin-chart-wrap-wide {
+        max-height: 180px;
+    }
+</style>
+
+@section Scripts {
+    <script id="monthlyLabelsJson" type="application/json">@Html.Raw(Model.MonthlyLabelsJson)</script>
+    <script id="monthlyRevenueJson" type="application/json">@Html.Raw(Model.MonthlyRevenueJson)</script>
+    <script id="orderTypeLabelsJson" type="application/json">@Html.Raw(Model.OrderTypeLabelsJson)</script>
+    <script id="orderTypeDataJson" type="application/json">@Html.Raw(Model.OrderTypeDataJson)</script>
+    <script id="orderStatusLabelsJson" type="application/json">@Html.Raw(Model.OrderStatusLabelsJson)</script>
+    <script id="orderStatusDataJson" type="application/json">@Html.Raw(Model.OrderStatusDataJson)</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const monthlyLabels = JSON.parse(document.getElementById('monthlyLabelsJson').textContent);
+        const monthlyRevenue = JSON.parse(document.getElementById('monthlyRevenueJson').textContent);
+        const orderTypeLabels = JSON.parse(document.getElementById('orderTypeLabelsJson').textContent);
+        const orderTypeData = JSON.parse(document.getElementById('orderTypeDataJson').textContent);
+        const orderStatusLabels = JSON.parse(document.getElementById('orderStatusLabelsJson').textContent);
+        const orderStatusData = JSON.parse(document.getElementById('orderStatusDataJson').textContent);
+
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: monthlyRevenue,
+                    borderColor: '#8b6f4e',
+                    backgroundColor: 'rgba(139, 111, 78, 0.16)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('orderTypeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: orderTypeLabels,
+                datasets: [{
+                    data: orderTypeData,
+                    backgroundColor: ['#8b6f4e', '#c8ad89']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('orderStatusChart'), {
+            type: 'bar',
+            data: {
+                labels: orderStatusLabels,
+                datasets: [{
+                    label: 'Số đơn',
+                    data: orderStatusData,
+                    backgroundColor: '#8b6f4e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,62 @@
+@page "{id:guid}"
+@model BOOKORIA.Pages.Admin.Orders.EditModel
+@{
+    ViewData["Title"] = "Sửa trạng thái đơn hàng";
+}
+
+<h1 class="h3 mb-3">Sửa trạng thái đơn hàng</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" class="card shadow-sm border-0">
+    <div class="card-body">
+        <input asp-for="Input.Id" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+        <div class="mb-3">
+            <label asp-for="Input.OrderStatus" class="form-label"></label>
+            <select asp-for="Input.OrderStatus" asp-items="Html.GetEnumSelectList<BOOKORIA.Domain.Enums.OrderStatus>()" class="form-select"></select>
+            <span asp-validation-for="Input.OrderStatus" class="text-danger"></span>
+        </div>
+
+        @if (Model.IsPhysicalOrder)
+        {
+            <hr />
+            <div class="mb-3">
+                <label asp-for="Input.ShippingStatus" class="form-label"></label>
+                <select asp-for="Input.ShippingStatus" asp-items="Html.GetEnumSelectList<BOOKORIA.Domain.Enums.ShippingStatus>()" class="form-select"></select>
+                <span asp-validation-for="Input.ShippingStatus" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Carrier" class="form-label"></label>
+                <input asp-for="Input.Carrier" class="form-control" />
+                <span asp-validation-for="Input.Carrier" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.TrackingCode" class="form-label"></label>
+                <input asp-for="Input.TrackingCode" class="form-control" />
+                <span asp-validation-for="Input.TrackingCode" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Note" class="form-label"></label>
+                <textarea asp-for="Input.Note" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Input.Note" class="text-danger"></span>
+            </div>
+        }
+    </div>
+    <div class="card-footer d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        <a asp-page="/Admin/Orders/Index" class="btn btn-outline-secondary">Quay lại</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

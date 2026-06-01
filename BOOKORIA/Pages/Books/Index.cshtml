@@ -1,0 +1,371 @@
+@page
+@model BOOKORIA.Pages.Books.IndexModel
+@{
+    ViewData["Title"] = "Danh sách sách";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Danh sách sách</h1>
+</div>
+
+<form method="get" class="card card-body shadow-sm mb-3 border-0 books-search-card">
+    <input type="hidden" asp-for="PageNumber" value="1" />
+
+    <div class="row g-1 align-items-end">
+        <div class="col-12 col-xl-9">
+            <label asp-for="Keyword" class="form-label small text-muted mb-1 fw-semibold search-label">Từ khóa</label>
+            <div class="input-group">
+                <span class="input-group-text search-icon"><i class="bi bi-search"></i></span>
+                <input asp-for="Keyword" id="keywordInput" class="form-control" placeholder="Tên sách, tác giả, ISBN" />
+                <button type="submit" class="btn btn-primary px-3 search-submit-btn">Tìm</button>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-3">
+            <label class="form-label small text-muted mb-1 fw-semibold search-label">Bộ lọc</label>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100 filter-toggle-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    Bộ lọc nâng cao
+                </button>
+
+                <div class="dropdown-menu p-3 shadow filter-dropdown" style="min-width: 300px;">
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label small text-muted mb-1">Danh mục</label>
+                        <select asp-for="CategoryId" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SortBy" class="form-label small text-muted mb-1">Sắp xếp</label>
+                        <select asp-for="SortBy" class="form-select">
+                            <option value="title_asc">Tên A-Z</option>
+                            <option value="title_desc">Tên Z-A</option>
+                            <option value="ebook_asc">Giá ebook tăng dần</option>
+                            <option value="ebook_desc">Giá ebook giảm dần</option>
+                            <option value="print_asc">Giá sách giấy tăng dần</option>
+                            <option value="print_desc">Giá sách giấy giảm dần</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label asp-for="MinEbookPrice" class="form-label small text-muted mb-1">Ebook từ</label>
+                            <input asp-for="MinEbookPrice" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="MaxEbookPrice" class="form-label small text-muted mb-1">Ebook đến</label>
+                            <input asp-for="MaxEbookPrice" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label asp-for="MinPrintPrice" class="form-label small text-muted mb-1">Sách giấy từ</label>
+                            <input asp-for="MinPrintPrice" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="MaxPrintPrice" class="form-label small text-muted mb-1">Sách giấy đến</label>
+                            <input asp-for="MaxPrintPrice" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="InStockOnly" class="form-check-input" />
+                        <label asp-for="InStockOnly" class="form-check-label">Chỉ hiển thị sách còn hàng</label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Áp dụng</button>
+                        <a asp-page="/Books/Index" class="btn btn-outline-secondary clear-filter-btn">Xóa lọc</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Books.Any())
+{
+    <div class="alert alert-info">Chưa có sách trong hệ thống.</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="text-muted small">Hiển thị @Model.StartItem - @Model.EndItem trên tổng @Model.TotalItems sách</div>
+        <div class="text-muted small">Trang @Model.PageNumber/@Model.TotalPages</div>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var book in Model.Books)
+        {
+            var discountPercent = book.PricePrint > 0
+                ? Math.Round((book.PricePrint - book.PriceEbook) / book.PricePrint * 100)
+                : 0;
+
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                <div class="card h-100 shadow-sm border-0 book-card">
+                    <div class="book-cover-wrapper bg-light rounded-top">
+                        @if (!string.IsNullOrWhiteSpace(book.CoverUrl))
+                        {
+                            <img src="@book.CoverUrl" class="book-cover-image" alt="@book.Title" />
+                        }
+                    </div>
+                    <div class="card-body d-flex flex-column text-center book-info-body">
+                        <h5 class="card-title book-title mb-1">
+                            <a asp-page="/Books/Details" asp-route-id="@book.Id" class="text-decoration-none">@book.Title</a>
+                        </h5>
+                        <h6 class="card-subtitle mb-2 book-author">@book.Author</h6>
+                        <div class="d-flex gap-2 mb-3 justify-content-center flex-wrap">
+                            @if (discountPercent > 0)
+                            {
+                                <span class="badge text-bg-danger">Tiết kiệm @discountPercent%</span>
+                            }
+                            <span class="badge @(book.Stock > 0 ? "text-bg-success" : "text-bg-secondary")">
+                                @(book.Stock > 0 ? "Còn hàng" : "Hết hàng")
+                            </span>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="book-price-line ebook-price"><span class="price-label">Ebook</span> @book.PriceEbook.ToString("N0") đ</div>
+                            <div class="book-price-line print-price"><span class="price-label">Sách giấy</span> @book.PricePrint.ToString("N0") đ</div>
+                            <div class="book-stock-line"><span class="price-label">Tồn kho</span> @book.Stock</div>
+                            <div class="mt-2">
+                                <a asp-page="/Books/Details" asp-route-id="@book.Id" class="btn btn-sm btn-primary">Xem chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        var startPage = Math.Max(1, Model.PageNumber - 2);
+        var endPage = Math.Min(Model.TotalPages, Model.PageNumber + 2);
+
+        <nav class="mt-4" aria-label="Book pagination">
+            <ul class="pagination pagination-sm justify-content-center">
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : null)">
+                    <a class="page-link"
+                       asp-page="/Books/Index"
+                       asp-route-keyword="@Model.Keyword"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-minEbookPrice="@Model.MinEbookPrice"
+                       asp-route-maxEbookPrice="@Model.MaxEbookPrice"
+                       asp-route-minPrintPrice="@Model.MinPrintPrice"
+                       asp-route-maxPrintPrice="@Model.MaxPrintPrice"
+                       asp-route-inStockOnly="@Model.InStockOnly"
+                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-pageNumber="@(Model.PageNumber - 1)">Trước</a>
+                </li>
+
+                @for (var i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : null)">
+                        <a class="page-link"
+                           asp-page="/Books/Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-minEbookPrice="@Model.MinEbookPrice"
+                           asp-route-maxEbookPrice="@Model.MaxEbookPrice"
+                           asp-route-minPrintPrice="@Model.MinPrintPrice"
+                           asp-route-maxPrintPrice="@Model.MaxPrintPrice"
+                           asp-route-inStockOnly="@Model.InStockOnly"
+                           asp-route-sortBy="@Model.SortBy"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-pageNumber="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : null)">
+                    <a class="page-link"
+                       asp-page="/Books/Index"
+                       asp-route-keyword="@Model.Keyword"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-minEbookPrice="@Model.MinEbookPrice"
+                       asp-route-maxEbookPrice="@Model.MaxEbookPrice"
+                       asp-route-minPrintPrice="@Model.MinPrintPrice"
+                       asp-route-maxPrintPrice="@Model.MaxPrintPrice"
+                       asp-route-inStockOnly="@Model.InStockOnly"
+                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-pageNumber="@(Model.PageNumber + 1)">Sau</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const input = document.getElementById('keywordInput');
+            if (input && !input.value) {
+                input.focus();
+            }
+        })();
+    </script>
+}
+
+<style>
+    .books-search-card {
+        border: 1px solid #ddcdb6 !important;
+        border-radius: .75rem;
+        background: #f8f2e9;
+        padding: .6rem .7rem !important;
+        box-shadow: none !important;
+    }
+
+    .search-label {
+        font-size: .74rem;
+        letter-spacing: .02em;
+    }
+
+    .search-icon {
+        background: #f2e8da;
+        border-right: 0;
+        color: #7a654c;
+        padding: 0 .6rem;
+    }
+
+    .books-search-card #keywordInput {
+        border-left: 0;
+        height: 34px;
+        font-size: .88rem;
+    }
+
+    .books-search-card .btn {
+        height: 34px;
+        font-size: .85rem;
+        padding-top: .2rem;
+        padding-bottom: .2rem;
+    }
+
+    .filter-toggle-btn {
+        height: 34px;
+        font-weight: 500;
+        background: #f2e8da;
+        border-color: #cdb79f;
+        color: #5c4b39;
+    }
+
+    .filter-dropdown {
+        border: 1px solid #d8c7b0;
+        border-radius: .75rem;
+        padding: .75rem !important;
+        background: #fffaf2;
+    }
+
+    .filter-dropdown .form-control,
+    .filter-dropdown .form-select,
+    .filter-dropdown .btn {
+        font-size: .86rem;
+    }
+
+    .clear-filter-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .filter-dropdown .form-control,
+    .filter-dropdown .form-select {
+        padding-top: .3rem;
+        padding-bottom: .3rem;
+    }
+
+    .book-cover-wrapper {
+        height: 340px;
+        overflow: hidden;
+        background: #f4ebde;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .book-card {
+        background: #fffaf2;
+        border: 1px solid #e2d3bf !important;
+    }
+
+    .book-cover-image {
+        width: auto;
+        max-width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        display: block;
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .18);
+    }
+
+    .book-title {
+        font-size: 1.12rem;
+        font-weight: 800;
+        line-height: 1.35;
+        min-height: 3rem;
+    }
+
+    .book-title a {
+        color: #0f172a;
+    }
+
+    .book-title a:hover {
+        color: #6f563e;
+    }
+
+    .book-author {
+        font-size: .95rem;
+        color: #475569;
+        font-weight: 500;
+        min-height: 1.5rem;
+    }
+
+    .book-price-line,
+    .book-stock-line {
+        font-size: .98rem;
+        color: #0f172a;
+        line-height: 1.5;
+    }
+
+    .book-info-body {
+        justify-content: flex-start;
+    }
+
+    .price-label {
+        display: inline-block;
+        min-width: 78px;
+        font-weight: 500;
+        color: #475569;
+    }
+
+    .ebook-price {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #4e3d2d;
+    }
+
+    .print-price {
+        font-weight: 700;
+        color: #5d4a37;
+    }
+
+    .book-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.12) !important;
+    }
+
+    @@media (max-width: 575.98px) {
+        .filter-dropdown {
+            min-width: 100% !important;
+        }
+    }
+</style>
