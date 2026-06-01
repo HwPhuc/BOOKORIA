@@ -71,6 +71,13 @@ builder.Services.AddScoped<IStripeWebhookService, StripeWebhookService>();
 builder.Services.AddScoped<IStripeCheckoutService, StripeCheckoutService>();
 builder.Services.AddScoped<ICloudinaryStorageService, CloudinaryStorageService>();
 
+//
+if (string.Equals(databaseProvider, "Postgres", StringComparison.OrdinalIgnoreCase))
+{
+    AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+}
+//
+
 var app = builder.Build();
 
 var migrateOnStartup = builder.Configuration.GetValue<bool>("MIGRATE_ON_STARTUP");
