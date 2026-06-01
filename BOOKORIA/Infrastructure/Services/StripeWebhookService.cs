@@ -9,7 +9,7 @@ namespace BOOKORIA.Infrastructure.Services;
 
 public class StripeWebhookService(
     BookoriaDbContext dbContext,
-    IServiceProvider serviceProvider, //
+    IServiceScopeFactory serviceProvider, //
     IEbookDeliveryService ebookDeliveryService,
     ILogger<StripeWebhookService> logger) : IStripeWebhookService
 {
