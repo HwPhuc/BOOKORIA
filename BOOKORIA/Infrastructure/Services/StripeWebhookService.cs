@@ -28,6 +28,13 @@ public class StripeWebhookService(
         if (payment.Status == PaymentStatus.Succeeded)
         {
             logger.LogInformation("Stripe session {StripeSessionId} already processed", stripeSessionId);
+            //
+            if (payment.Order.Items.Any(x => x.ItemType == "Ebook"))
+            {
+                // Nếu trạng thái đã succeeded nhưng vì lý do dẫm chân luồng mà chưa gửi mail, tiến hành gửi bù
+                await ebookDeliveryService.SendEbookAsync(payment.OrderId, cancellationToken);
+            }
+            //
             return;
         }
 
