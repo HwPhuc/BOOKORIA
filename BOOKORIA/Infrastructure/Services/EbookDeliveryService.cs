@@ -54,47 +54,32 @@ namespace BOOKORIA.Infrastructure.Services;
 public class EbookDeliveryService(
     BookoriaDbContext dbContext,
     IEmailService emailService,
-    ILogger<EbookDeliveryService> logger)
-    : IEbookDeliveryService
+    ILogger<EbookDeliveryService> logger) : IEbookDeliveryService
 {
-    public async Task SendEbookAsync(
-        Guid orderId,
-        CancellationToken cancellationToken = default)
+    public async Task SendEbookAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
         var delivery = await dbContext.EbookDeliveries
             .Include(x => x.Order)
             .ThenInclude(x => x.Items)
             .ThenInclude(x => x.Book)
-            .FirstOrDefaultAsync(
-                x => x.OrderId == orderId,
-                cancellationToken);
+            .FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken);
 
         if (delivery is null)
         {
-            logger.LogWarning(
-                "Ebook delivery not found for order {OrderId}",
-                orderId);
-
+            logger.LogWarning("Ebook delivery not found for order {OrderId}", orderId);
             return;
         }
 
         if (delivery.SentAtUtc != null)
         {
-            logger.LogInformation(
-                "Ebook already sent for order {OrderId}",
-                orderId);
-
+            logger.LogInformation("Ebook already sent for order {OrderId}", orderId);
             return;
         }
 
-        logger.LogInformation(
-            "Start sending ebook email to {Email}",
-            delivery.EmailTo);
+        logger.LogInformation("Start sending ebook email to {Email}", delivery.EmailTo);
 
         var ebookLines = delivery.Order.Items
-            .Where(x =>
-                x.ItemType == "Ebook" &&
-                !string.IsNullOrWhiteSpace(x.Book.FullPdfUrl))
+            .Where(x => x.ItemType == "Ebook" && !string.IsNullOrWhiteSpace(x.Book.FullPdfUrl))
             .Select(x => $"- {x.Book.Title}: {x.Book.FullPdfUrl}")
             .Distinct()
             .ToList();
@@ -115,17 +100,11 @@ public class EbookDeliveryService(
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            logger.LogInformation(
-                "Ebook email sent successfully to {Email}",
-                delivery.EmailTo);
+            logger.LogInformation("Ebook email sent successfully to {Email}", delivery.EmailTo);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Failed to send ebook email to {Email}",
-                delivery.EmailTo);
-
+            logger.LogError(ex, "Failed to send ebook email to {Email}", delivery.EmailTo);
             throw;
         }
     }

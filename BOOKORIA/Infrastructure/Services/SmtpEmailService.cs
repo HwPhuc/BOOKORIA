@@ -60,8 +60,7 @@ namespace BOOKORIA.Infrastructure.Services;
 
 public class SmtpEmailService(
     IOptions<EmailOptions> emailOptions,
-    ILogger<SmtpEmailService> logger)
-    : IEmailService
+    ILogger<SmtpEmailService> logger) : IEmailService
 {
     public async Task SendAsync(
         string to,
@@ -72,15 +71,7 @@ public class SmtpEmailService(
         var options = emailOptions.Value;
 
         logger.LogInformation(
-            """
-            SMTP Config:
-            Host={Host}
-            Port={Port}
-            EnableSsl={EnableSsl}
-            Username={Username}
-            From={From}
-            HasPassword={HasPassword}
-            """,
+            "SMTP Config: Host={Host}, Port={Port}, EnableSsl={EnableSsl}, Username={Username}, From={From}, HasPassword={HasPassword}",
             options.SmtpHost,
             options.SmtpPort,
             options.EnableSsl,
@@ -90,26 +81,18 @@ public class SmtpEmailService(
 
         if (string.IsNullOrWhiteSpace(options.SmtpHost))
         {
-            logger.LogError("SMTP Host is empty");
-
-            throw new InvalidOperationException(
-                "SMTP Host is not configured.");
+            logger.LogWarning("SMTP host is not configured. Cannot send email to {To}.", to);
+            return;
         }
 
         try
         {
-            using var message = new MailMessage(
-                options.FromAddress,
-                to,
-                subject,
-                body)
+            using var message = new MailMessage(options.FromAddress, to, subject, body)
             {
                 IsBodyHtml = false
             };
 
-            using var client = new SmtpClient(
-                options.SmtpHost,
-                options.SmtpPort)
+            using var client = new SmtpClient(options.SmtpHost, options.SmtpPort)
             {
                 EnableSsl = options.EnableSsl,
                 DeliveryMethod = SmtpDeliveryMethod.Network,
@@ -117,30 +100,17 @@ public class SmtpEmailService(
             };
 
             client.UseDefaultCredentials = false;
+            client.Credentials = new NetworkCredential(
+                options.SmtpUsername,
+                options.SmtpPassword);
 
-            client.Credentials =
-                new NetworkCredential(
-                    options.SmtpUsername,
-                    options.SmtpPassword);
+            await client.SendMailAsync(message, cancellationToken);
 
-            logger.LogInformation(
-                "Connecting SMTP server...");
-
-            await client.SendMailAsync(
-                message,
-                cancellationToken);
-
-            logger.LogInformation(
-                "Email sent successfully to {To}",
-                to);
+            logger.LogInformation("Email sent successfully to {To}", to);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "SMTP send failed. To={To}",
-                to);
-
+            logger.LogError(ex, "SMTP send failed. To={To}", to);
             throw;
         }
     }

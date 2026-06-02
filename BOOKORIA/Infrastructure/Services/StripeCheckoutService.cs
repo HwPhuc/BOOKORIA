@@ -147,6 +147,7 @@ namespace BOOKORIA.Infrastructure.Services;
 
 public class StripeCheckoutService(
     BookoriaDbContext dbContext,
+    IStripeWebhookService stripeWebhookService,
     IOptions<StripeOptions> options,
     ILogger<StripeCheckoutService> logger) : IStripeCheckoutService
 {
@@ -159,9 +160,7 @@ public class StripeCheckoutService(
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.Value.SecretKey))
-        {
             throw new InvalidOperationException("Stripe SecretKey is not configured.");
-        }
 
         StripeConfiguration.ApiKey = options.Value.SecretKey;
 
@@ -189,11 +188,8 @@ public class StripeCheckoutService(
             }).ToList()
         }, cancellationToken: cancellationToken);
 
-        if (string.IsNullOrWhiteSpace(session.Id) ||
-            string.IsNullOrWhiteSpace(session.Url))
-        {
+        if (string.IsNullOrWhiteSpace(session.Id) || string.IsNullOrWhiteSpace(session.Url))
             throw new InvalidOperationException("Cannot create Stripe checkout session.");
-        }
 
         var existingPayment = await dbContext.Payments
             .FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken);
@@ -228,17 +224,12 @@ public class StripeCheckoutService(
         if (string.IsNullOrWhiteSpace(stripeSessionId) ||
             !stripeSessionId.StartsWith("cs_", StringComparison.OrdinalIgnoreCase))
         {
-            logger.LogWarning(
-                "Invalid Stripe session id received: {StripeSessionId}",
-                stripeSessionId);
-
+            logger.LogWarning("Invalid Stripe session id received: {StripeSessionId}", stripeSessionId);
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(options.Value.SecretKey))
-        {
             throw new InvalidOperationException("Stripe SecretKey is not configured.");
-        }
 
         StripeConfiguration.ApiKey = options.Value.SecretKey;
 
@@ -254,28 +245,23 @@ public class StripeCheckoutService(
         }
         catch (StripeException ex)
         {
-            logger.LogWarning(
-                ex,
-                "Cannot get Stripe session {StripeSessionId}",
-                stripeSessionId);
-
+            logger.LogWarning(ex, "Cannot get Stripe session {StripeSessionId}", stripeSessionId);
             return false;
         }
 
-        if (!string.Equals(
-                session.PaymentStatus,
-                "paid",
-                StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(session.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase))
         {
-            logger.LogInformation(
-                "Stripe session {StripeSessionId} is not paid yet",
-                stripeSessionId);
-
+            logger.LogInformation("Stripe session {StripeSessionId} is not paid yet", stripeSessionId);
             return false;
         }
+
+        await stripeWebhookService.HandleCheckoutCompletedAsync(
+            stripeSessionId,
+            sendEmail: false,
+            cancellationToken);
 
         logger.LogInformation(
-            "Stripe session {StripeSessionId} is paid. Waiting webhook to process order.",
+            "Stripe session {StripeSessionId} is paid. Order processed without email in redirect flow.",
             stripeSessionId);
 
         return true;
@@ -283,8 +269,6 @@ public class StripeCheckoutService(
 
     private static long ToStripeAmount(decimal amount)
     {
-        return (long)Math.Round(
-            amount,
-            MidpointRounding.AwayFromZero);
+        return (long)Math.Round(amount, MidpointRounding.AwayFromZero);
     }
 }
