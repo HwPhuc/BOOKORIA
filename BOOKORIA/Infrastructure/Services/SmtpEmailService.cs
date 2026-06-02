@@ -50,11 +50,12 @@
 
 
 
-using System.Net;
-using System.Net.Mail;
 using BOOKORIA.Application.Abstractions;
 using BOOKORIA.Infrastructure.Options;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace BOOKORIA.Infrastructure.Services;
 
@@ -85,28 +86,56 @@ public class SmtpEmailService(
             return;
         }
 
+        var message = new MimeMessage();
+
+        message.From.Add(MailboxAddress.Parse(options.FromAddress));
+        message.To.Add(MailboxAddress.Parse(to));
+        message.Subject = subject;
+
+        message.Body = new TextPart("plain")
+        {
+            Text = body
+        };
+
+        using var smtp = new SmtpClient();
+
+        smtp.Timeout = 60000;
+
         try
         {
-            using var message = new MailMessage(options.FromAddress, to, subject, body)
+            var secureSocketOptions = options.SmtpPort == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
+
+            logger.LogInformation(
+                "Connecting to SMTP server {Host}:{Port} using {SecureSocketOptions}",
+                options.SmtpHost,
+                options.SmtpPort,
+                secureSocketOptions);
+
+            await smtp.ConnectAsync(
+                options.SmtpHost,
+                options.SmtpPort,
+                secureSocketOptions,
+                cancellationToken);
+
+            logger.LogInformation("SMTP connected");
+
+            if (!string.IsNullOrWhiteSpace(options.SmtpUsername))
             {
-                IsBodyHtml = false
-            };
+                await smtp.AuthenticateAsync(
+                    options.SmtpUsername,
+                    options.SmtpPassword,
+                    cancellationToken);
 
-            using var client = new SmtpClient(options.SmtpHost, options.SmtpPort)
-            {
-                EnableSsl = options.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                Timeout = 30000
-            };
+                logger.LogInformation("SMTP authenticated");
+            }
 
-            client.UseDefaultCredentials = false;
-            client.Credentials = new NetworkCredential(
-                options.SmtpUsername,
-                options.SmtpPassword);
-
-            await client.SendMailAsync(message, cancellationToken);
+            await smtp.SendAsync(message, cancellationToken);
 
             logger.LogInformation("Email sent successfully to {To}", to);
+
+            await smtp.DisconnectAsync(true, cancellationToken);
         }
         catch (Exception ex)
         {
