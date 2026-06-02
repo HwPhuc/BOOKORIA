@@ -257,7 +257,7 @@ public class StripeCheckoutService(
 
         await stripeWebhookService.HandleCheckoutCompletedAsync(
             stripeSessionId,
-            sendEmail: false,
+            sendEmail: true,
             cancellationToken);
 
         logger.LogInformation(
