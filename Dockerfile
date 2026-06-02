@@ -9,6 +9,9 @@ RUN dotnet publish BOOKORIA/BOOKORIA.csproj -c Release -o /app/publish
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
+
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+
 COPY --from=build /app/publish .
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "BOOKORIA.dll"]
